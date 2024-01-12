@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import { Worker } from "node:worker_threads";
 
-const baseUrl = "https://api.contexto.me/machado/en/game/480/";
+const baseUrl = "https://api.contexto.me/machado/en/game/481/";
 const file = await fs.readFile("./assets/lemmas.txt", { encoding: "utf8" });
 const words = file.split("\n");
 
