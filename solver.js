@@ -53,6 +53,5 @@ for (const chunk of getChunk()) {
 }
 
 
-
 parentPort.postMessage({ word: bestMatch?.word, found: false });
 process.exit(0);
