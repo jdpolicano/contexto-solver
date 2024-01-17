@@ -4,7 +4,7 @@ import solve from "./run.js";
 const program = new Command();
 
 program
-    .option("-d, --day <puzzle #>", "the puzzle number to try to solve.")
+    .requiredOption("-d, --day <puzzle #>", "the puzzle number to try to solve.")
     .action((options) => { 
         options.day = parseInt(options.day);
     })

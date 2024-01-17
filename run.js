@@ -16,18 +16,17 @@ export default async function solve(puzzleNumber) {
   const baseUrl = `https://api.contexto.me/machado/en/game/${puzzleNumber}/`;
   const file = await fs.readFile("./assets/lemmas.txt", { encoding: "utf8" });
   const words = file.split("\n");
-  
+
   let maxChildren = os.cpus().length - 1;
   let chunkSize = Math.ceil(words.length / maxChildren);
   let base = 0;
-  let gracefulShutdown = false;
+  let foundWord = false;
   
   // will use this to cancel the other children after one succeeds.
   const workerRefs = [];
   
   const workers = new Array(maxChildren).fill(null).map((_, idx) => {
     return new Promise((resolve, reject) => {
-      // console.log(words.slice(base, Math.min(base + chunkSize, words.length)));
       const worker = new Worker("./solver.js", {
         workerData: {
           words: words.slice(base, Math.min(base + chunkSize, words.length)),
@@ -38,7 +37,6 @@ export default async function solve(puzzleNumber) {
   
 
       worker.on("message", (data) => {
-        gracefulShutdown = true;
         if (data.found === true) {
           closeRefs(workerRefs, idx);
           return resolve(data);
@@ -47,14 +45,15 @@ export default async function solve(puzzleNumber) {
         return reject();
       });
       
-      worker.on("error", (err) => reject(err));
+      worker.on("error", (err) => {
+        console.log(`Child ${idx} errored out.`);
+        closeRefs(workerRefs, idx);
+        reject(err);
+      });
+      
       worker.on("exit", (code) => {
-        if (!gracefulShutdown) {
-          console.log(`Graceful shutdown failed. Child #${idx} exited with code (${code}).`);
-          closeRefs(workerRefs, idx);
-          return reject();
-        }
         console.log(`Child ${idx} exited with code (${code})`);
+        reject();
       });
   
   
@@ -67,6 +66,7 @@ export default async function solve(puzzleNumber) {
     const { word } = await Promise.any(workers);
     console.log(`The word is "${word}"`);
   } catch (err) {
+    console.log(err);
     console.log("unable to find word from wordlist.");
   }
 }
